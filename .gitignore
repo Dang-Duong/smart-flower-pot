@@ -1,0 +1,10 @@
+# Next.js / Node ignores
+node_modules/
+.next/
+.env
+.env.local
+
+# Hardware ignores 
+build/
+*.hex
+*.elf
