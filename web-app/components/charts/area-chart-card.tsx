@@ -34,6 +34,7 @@ export function AreaChartCard({
 }: AreaChartCardProps) {
   const uid = useId();
   const gradientId = `gradient-${uid}`;
+  const highlightValue = data.find((d) => d.t === highlightT)?.value;
 
   return (
     <Card className="bg-card text-card-foreground rounded-2xl h-full">
@@ -75,7 +76,7 @@ export function AreaChartCard({
                   stroke="#6366F1"
                   strokeWidth={2}
                   label={{
-                    value: highlightT,
+                    value: highlightValue != null ? `${highlightValue}${unit}` : highlightT,
                     position: "top",
                     fill: "#6366F1",
                     fontSize: 11,
