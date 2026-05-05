@@ -34,6 +34,7 @@ const char* ATLAS_API_KEY   = "TVUJ_API_KEY";
 const char* ATLAS_DATABASE  = "kvetinac";
 const char* ATLAS_COLLECTION = "mereni";
 const char* ATLAS_DATASOURCE = "Cluster0";  // název tvého clusteru
+const char* JWT_TOKEN = "TVUJ_JWT_TOKEN";
 
 // Zařízení
 const char* DEVICE_ID = "kvetinac-01";
@@ -194,6 +195,7 @@ void odesli_do_atlas(String &payload) {
   http.addHeader("Content-Type", "application/ejson");
   http.addHeader("Accept", "application/json");
   http.addHeader("api-key", ATLAS_API_KEY);
+  http.addHeader("Authorization", "Bearer " + String(JWT_TOKEN));
 
   int code = http.POST(payload);
 
