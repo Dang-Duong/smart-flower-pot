@@ -1,6 +1,12 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+export interface IDevice {
+  deviceId: string;
+  name: string;
+  token: string;
+}
+
 export interface IUser extends Document {
   username: string;
   email: string;
@@ -8,9 +14,18 @@ export interface IUser extends Document {
   surname: string;
   password: string;
   tokens: string[];
-  devices: string[];
+  devices: IDevice[];
   comparePassword(candidate: string): Promise<boolean>;
 }
+
+const deviceSchema = new Schema<IDevice>(
+  {
+    deviceId: { type: String, required: true },
+    name:     { type: String, required: true },
+    token:    { type: String, required: true },
+  },
+  { _id: false }
+);
 
 const userSchema = new Schema<IUser>(
   {
@@ -20,7 +35,7 @@ const userSchema = new Schema<IUser>(
     surname:  { type: String, required: true, trim: true },
     password: { type: String, required: true },
     tokens:   { type: [String], default: [] },
-    devices:  { type: [String], default: [] },
+    devices:  { type: [deviceSchema], default: [] },
   },
   { timestamps: true }
 );
