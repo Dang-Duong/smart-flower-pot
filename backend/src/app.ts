@@ -4,6 +4,7 @@ import cors from 'cors';
 import { connectDatabase } from './config/database';
 import authRoutes from './routes/auth';
 import iotRoutes from './routes/iot';
+import usersRoutes from './routes/users';
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -14,6 +15,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/iot', iotRoutes);
+app.use('/api/users', usersRoutes);
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
