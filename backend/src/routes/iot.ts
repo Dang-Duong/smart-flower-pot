@@ -3,18 +3,27 @@ import jwt from 'jsonwebtoken';
 import { authenticateUser } from '../middleware/authUser';
 import { SensorReading } from '../models/SensorReading';
 import { DeviceJwtPayload } from '../types';
+import { validate } from '../middleware/validate';
 
 const router = Router();
 
 // POST /api/iot/readings
-// IoT device sends token in body + sensor data
 router.post('/readings', async (req: Request, res: Response) => {
-  const { token, airTemp, airMoisture, light, uvIndex, soilMoisture } = req.body;
+  const error = validate(req.body, {
+    token:       { type: 'string' },
+    airTemp:     { type: 'number' },
+    airMoisture: { type: 'number' },
+    light:       { type: 'number' },
+    uvIndex:     { type: 'number' },
+    soilMoisture:{ type: 'number' },
+  });
 
-  if (!token) {
-    res.status(401).json({ error: 'Missing token' });
+  if (error) {
+    res.status(400).json({ error });
     return;
   }
+
+  const { token, airTemp, airMoisture, light, uvIndex, soilMoisture } = req.body;
 
   let deviceId: string;
   try {
@@ -25,33 +34,24 @@ router.post('/readings', async (req: Request, res: Response) => {
     return;
   }
 
-  if (
-    airTemp === undefined ||
-    airMoisture === undefined ||
-    light === undefined ||
-    uvIndex === undefined ||
-    soilMoisture === undefined
-  ) {
-    res.status(400).json({
-      error: 'Missing required fields: airTemp, airMoisture, light, uvIndex, soilMoisture',
+  try {
+    const reading = await SensorReading.create({
+      deviceId,
+      airTemp,
+      airMoisture,
+      light,
+      uvIndex,
+      soilMoisture,
     });
-    return;
+
+    res.status(201).json({ message: 'Reading saved', id: reading._id });
+  } catch (err) {
+    console.error('[post reading]', err);
+    res.status(500).json({ error: 'Failed to save reading' });
   }
-
-  const reading = await SensorReading.create({
-    deviceId,
-    airTemp,
-    airMoisture,
-    light,
-    uvIndex,
-    soilMoisture,
-  });
-
-  res.status(201).json({ message: 'Reading saved', id: reading._id });
 });
 
 // GET /api/iot/readings?deviceId=uuid
-// Web app fetches readings for a specific device — requires user JWT
 router.get('/readings', authenticateUser, async (req: Request, res: Response) => {
   const { deviceId } = req.query;
 
@@ -60,9 +60,13 @@ router.get('/readings', authenticateUser, async (req: Request, res: Response) =>
     return;
   }
 
-  const readings = await SensorReading.find({ deviceId }).sort({ createdAt: -1 });
-
-  res.json({ readings });
+  try {
+    const readings = await SensorReading.find({ deviceId }).sort({ createdAt: -1 });
+    res.json({ readings });
+  } catch (err) {
+    console.error('[get readings]', err);
+    res.status(500).json({ error: 'Failed to get readings' });
+  }
 });
 
 export default router;
