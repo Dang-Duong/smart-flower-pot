@@ -1,14 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logout } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Detail", href: "/detail" },
   { label: "History", href: "/history" },
-  { label: "Notification", href: "/notifications" },
+  { label: "Notifications", href: "/notifications" },
+  { label: "Devices", href: "/devices" },
 ];
 
 function LeafLogo() {
@@ -27,33 +32,113 @@ function LeafLogo() {
 
 export function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+
+  async function handleLogout() {
+    await logout().catch(() => {});
+    router.replace("/login");
+  }
+
+  function handleNavClick() {
+    setOpen(false);
+  }
 
   return (
-    <nav className="sticky top-0 z-50 bg-[#F5A623] px-3 py-2 sm:px-6 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
-      <Link href="/dashboard" aria-label="Smart Flower Pot home" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        <LeafLogo />
-        <span className="font-black text-black text-base hidden sm:block">Smart Flower Pot</span>
-      </Link>
-      <div className="flex items-center gap-1 sm:gap-2">
-        {navItems.map((item) => {
+    <>
+      <nav className="sticky top-0 z-50 bg-[#F5A623] px-3 py-2 sm:px-6 sm:py-3 flex items-center justify-between gap-2">
+        {/* Logo */}
+        <Link
+          href="/dashboard"
+          aria-label="Smart Flower Pot home"
+          className="flex items-center gap-2 sm:gap-3 flex-shrink-0"
+        >
+          <LeafLogo />
+          <span className="font-black text-black text-base hidden sm:block">Smart Flower Pot</span>
+        </Link>
+
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-1">
+          {navItems.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "px-4 py-1.5 rounded-xl text-sm font-bold border-2 transition-colors whitespace-nowrap",
+                  active
+                    ? "bg-black text-white border-white"
+                    : "bg-black text-white border-black hover:border-white/60"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleLogout}
+            aria-label="Logout"
+            className="ml-1 text-black hover:bg-black/10 hover:text-black"
+          >
+            <LogOut className="size-4" />
+          </Button>
+        </div>
+
+        {/* Mobile: logout + hamburger */}
+        <div className="flex items-center gap-1 md:hidden">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleLogout}
+            aria-label="Logout"
+            className="text-black hover:bg-black/10 hover:text-black"
+          >
+            <LogOut className="size-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Toggle menu"
+            className="text-black hover:bg-black/10 hover:text-black"
+          >
+            <Menu className={cn("size-5 absolute transition-all duration-300", open ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100")} />
+            <X className={cn("size-5 absolute transition-all duration-300", open ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75")} />
+          </Button>
+        </div>
+      </nav>
+
+      {/* Mobile drawer */}
+      <div
+        className={cn(
+          "md:hidden sticky top-[56px] z-40 bg-[#F5A623] border-t border-black/10 px-4 flex flex-col gap-1 overflow-hidden transition-all duration-300 ease-in-out",
+          open ? "max-h-96 pb-4 pt-2 opacity-100" : "max-h-0 pb-0 pt-0 opacity-0 pointer-events-none"
+        )}
+      >
+        {navItems.map((item, i) => {
           const active = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={handleNavClick}
+              style={{ transitionDelay: open ? `${i * 40}ms` : "0ms" }}
               className={cn(
-                "px-3 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold border-2 transition-colors whitespace-nowrap",
+                "px-4 py-2.5 rounded-xl text-sm font-bold border-2 transition-all duration-200",
+                open ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0",
                 active
                   ? "bg-black text-white border-white"
                   : "bg-black text-white border-black hover:border-white/60"
               )}
             >
-              <span className="sm:hidden">{item.label === "Notification" ? "Alerts" : item.label}</span>
-              <span className="hidden sm:inline">{item.label}</span>
+              {item.label}
             </Link>
           );
         })}
       </div>
-    </nav>
+    </>
   );
 }

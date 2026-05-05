@@ -64,7 +64,7 @@ export function WelcomeHero() {
           asChild
           className="bg-[#F5A623] hover:bg-[#e8941a] text-black font-bold px-10 py-6 rounded-full text-lg"
         >
-          <Link href="/dashboard">
+          <Link href="/signup">
             Get started
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
