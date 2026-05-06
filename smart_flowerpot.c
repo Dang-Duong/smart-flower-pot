@@ -25,22 +25,19 @@
 // =============================================================
 
 // WiFi
-const char* WIFI_SSID = "TVOJE_WIFI";
-const char* WIFI_PASS = "TVOJE_HESLO";
+const char* WIFI_SSID = "WIFI_NAME";
+const char* WIFI_PASS = "WIFI_PASS";
 
 // MongoDB Atlas Data API
-const char* ATLAS_URL       = "mongodb+srv://esp:EsP154839@main.cwbofbs.mongodb.net/SmartPot?retryWrites=true&w=majority&appName=Main";
-const char* ATLAS_API_KEY   = "TVUJ_API_KEY";
-const char* ATLAS_DATABASE  = "kvetinac";
-const char* ATLAS_COLLECTION = "mereni";
-const char* ATLAS_DATASOURCE = "Cluster0";  // název tvého clusteru
-const char* JWT_TOKEN = "TVUJ_JWT_TOKEN";
+
+const char* API_URL = "http://192.168.0.76:3001/api/iot/readings";
+const char* JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXZpY2VJZCI6IjdjNWMyZDBjLTBkZGQtNGE2MC1hMGYwLTNmMWQwOWFiYjNhMCIsImlhdCI6MTc3Nzk5NDIzMn0.2Pvzq9SzMoZDMBRnvtUohPj8VDJzkm6Irhg74kI2sQk";
 
 // Zařízení
 const char* DEVICE_ID = "kvetinac-01";
 
 // Interval měření (sekund)
-#define MEASURE_INTERVAL  300   // 5 minut
+#define MEASURE_INTERVAL  600   // 10 minut
 
 // Piny
 #define I2C_SDA       21
@@ -55,6 +52,36 @@ const char* DEVICE_ID = "kvetinac-01";
 // Kalibrace HD-38
 #define SOIL_DRY      4095
 #define SOIL_WET      1200
+
+// =============================================================
+//  FORWARD DEKLARACE
+// =============================================================
+void pripoj_wifi();
+void odesli_do_api(String &payload);
+
+// =============================================================
+//  WiFi
+// =============================================================
+void pripoj_wifi() {
+  Serial.printf("[WiFi] Pripojuji k: %s", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+  int pokusy = 0;
+  while (WiFi.status() != WL_CONNECTED && pokusy < 30) {
+    delay(500);
+    Serial.print(".");
+    pokusy++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.printf("\n[WiFi] OK! IP: %s\n", WiFi.localIP().toString().c_str());
+  } else {
+    Serial.println("\n[WiFi] SELHALO! Restart za 10s...");
+    delay(10000);
+    ESP.restart();
+  }
+}
 
 // =============================================================
 //  SETUP
@@ -166,77 +193,48 @@ void loop() {
   doc += "\"wifi_rssi\":" + String(WiFi.RSSI());
   doc += "}}";
 
-  String payload = "{";
-  payload += "\"dataSource\":\"" + String(ATLAS_DATASOURCE) + "\",";
-  payload += "\"database\":\"" + String(ATLAS_DATABASE) + "\",";
-  payload += "\"collection\":\"" + String(ATLAS_COLLECTION) + "\",";
-  payload += "\"document\":" + doc;
-  payload += "}";
-
-  // Odeslání do MongoDB Atlas
-  odesli_do_atlas(payload);
-
+  String payload = "{";                                                                                                                                                                                                                                                                                                   
+  payload += "\"token\":\"" + String(JWT_TOKEN) + "\",";
+  payload += "\"airTemp\":" + (sht30_ok ? String(teplota, 2) : "null") + ",";                                                                                                                                                                                                                                             
+  payload += "\"airMoisture\":" + (sht30_ok ? String(vlhkost_vzd, 2) : "null") + ",";                                                                                                                                                                                                                                     
+  payload += "\"light\":" + (bh1750_ok ? String(lux, 2) : "null") + ",";                                                                                                                                                                                                                                                  
+  payload += "\"uvIndex\":" + (ltr390_ok ? String(uv_index, 2) : "null") + ",";                                                                                                                                                                                                                                           
+  payload += "\"soilMoisture\":" + String(soil_pct, 2);                                                                                                                                                                                                                                                                   
+  payload += "}";                                                                                                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                                                          
+  odesli_do_api(payload);                                                                                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                                                        
   Serial.printf("Dalsi mereni za %d s...\n\n", MEASURE_INTERVAL);
   delay(MEASURE_INTERVAL * 1000);
-}
-
-// =============================================================
-//  ODESLÁNÍ DO MONGODB ATLAS
-// =============================================================
-
-void odesli_do_atlas(String &payload) {
-  Serial.println("[MongoDB] Odesilam...");
-
-  WiFiClientSecure client;
-  client.setInsecure();  // Pro produkci nahraď certifikátem
-
-  HTTPClient http;
-  http.begin(client, ATLAS_URL);
-  http.addHeader("Content-Type", "application/ejson");
-  http.addHeader("Accept", "application/json");
-  http.addHeader("api-key", ATLAS_API_KEY);
-  http.addHeader("Authorization", "Bearer " + String(JWT_TOKEN));
-
-  int code = http.POST(payload);
-
-  if (code == 200 || code == 201) {
-    String response = http.getString();
-    Serial.println("[MongoDB] OK - ulozeno!");
-    Serial.println("[MongoDB] " + response);
-  } else if (code > 0) {
-    String response = http.getString();
-    Serial.printf("[MongoDB] Chyba %d: %s\n", code, response.c_str());
-  } else {
-    Serial.printf("[MongoDB] Spojeni selhalo: %s\n",
-                  http.errorToString(code).c_str());
-  }
-
-  http.end();
 }
 
 // =============================================================
 //  WiFi
 // =============================================================
 
-void pripoj_wifi() {
-  Serial.printf("[WiFi] Pripojuji k: %s", WIFI_SSID);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+void odesli_do_api(String &payload) {
+  Serial.println("[API] Odesilam...");
+  Serial.println("[API] URL: " + String(API_URL));
+  Serial.println("[API] Payload: " + payload);
 
-  int pokusy = 0;
-  while (WiFi.status() != WL_CONNECTED && pokusy < 30) {
-    delay(500);
-    Serial.print(".");
-    pokusy++;
-  }
+  HTTPClient http;
+  // Pro HTTP (lokální síť) – bez WiFiClientSecure!
+  http.begin(API_URL);
+  http.addHeader("Content-Type", "application/json");
+  http.setTimeout(10000);
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.printf("\n[WiFi] OK! IP: %s\n", WiFi.localIP().toString().c_str());
+  int code = http.POST(payload);
+
+  if (code == 200 || code == 201) {
+    Serial.println("[API] OK - ulozeno!");
+    Serial.println("[API] " + http.getString());
+  } else if (code > 0) {
+    Serial.printf("[API] Chyba %d: %s\n", code, http.getString().c_str());
   } else {
-    Serial.println("\n[WiFi] SELHALO! Restart za 10s...");
-    delay(10000);
-    ESP.restart();
+    Serial.printf("[API] Spojeni selhalo: %s\n", http.errorToString(code).c_str());
   }
+
+  http.end();
 }
 
 // =============================================================
