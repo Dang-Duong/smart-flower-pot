@@ -9,9 +9,9 @@ import { latestMetric, aggregateByDayOfWeek, aggregateByHour, aggregateByDayOfMo
 
 type Range = "day" | "weekly" | "monthly";
 
-function resolveRange(raw: string | undefined): Range {
-  if (raw === "day" || raw === "monthly") return raw;
-  return "weekly";
+function resolveRange(raw: string | undefined, fallback: Range): Range {
+  if (raw === "day" || raw === "weekly" || raw === "monthly") return raw;
+  return fallback;
 }
 
 export default async function DetailPage({
@@ -20,8 +20,8 @@ export default async function DetailPage({
   searchParams: Promise<{ device?: string; tempRange?: string; humidityRange?: string }>;
 }) {
   const { device: deviceParamId, tempRange: tempRangeRaw, humidityRange: humidityRangeRaw } = await searchParams;
-  const tempRange = resolveRange(tempRangeRaw);
-  const humidityRange = resolveRange(humidityRangeRaw);
+  const tempRange = resolveRange(tempRangeRaw, "day");
+  const humidityRange = resolveRange(humidityRangeRaw, "weekly");
 
   const devices = await getDevicesServer();
 
