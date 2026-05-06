@@ -5,14 +5,23 @@ import { BarChartCard } from "@/components/charts/bar-chart-card";
 import { PageHeading } from "@/components/page-heading";
 import { flower } from "@/lib/mock-data";
 import { getDevicesServer, getReadingsServer } from "@/lib/api-server";
-import { latestMetric, aggregateByDayOfWeek, aggregateByHour } from "@/lib/aggregations";
+import { latestMetric, aggregateByDayOfWeek, aggregateByHour, aggregateByDayOfMonth } from "@/lib/aggregations";
+
+type Range = "day" | "weekly" | "monthly";
+
+function resolveRange(raw: string | undefined): Range {
+  if (raw === "day" || raw === "monthly") return raw;
+  return "weekly";
+}
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ device?: string }>;
+  searchParams: Promise<{ device?: string; humidityRange?: string }>;
 }) {
-  const { device: deviceParamId } = await searchParams;
+  const { device: deviceParamId, humidityRange: humidityRangeRaw } = await searchParams;
+  const humidityRange = resolveRange(humidityRangeRaw);
+
   const devices = await getDevicesServer();
 
   if (devices.length === 0) {
@@ -33,19 +42,31 @@ export default async function DashboardPage({
   const humidityMetric = latestMetric(readings, "soilMoisture", "%");
   const temperatureMetric = latestMetric(readings, "airTemp", "°C");
   const lightMetric = latestMetric(readings, "light", "lx");
-  const humidityWeek = aggregateByDayOfWeek(readings, "soilMoisture");
   const lightHourly = aggregateByHour(readings, "light");
+
+  const humidityChart =
+    humidityRange === "day"
+      ? aggregateByHour(readings, "soilMoisture")
+      : humidityRange === "monthly"
+        ? aggregateByDayOfMonth(readings, "soilMoisture")
+        : aggregateByDayOfWeek(readings, "soilMoisture");
 
   return (
     <>
       <PageHeading title="Dashboard" subtitle="Live plant overview" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <FlowerCard flower={flower} devices={devices} selectedDevice={selectedDevice} />
+        <FlowerCard
+          flower={flower}
+          devices={devices}
+          selectedDevice={selectedDevice}
+          status={humidityMetric.status}
+        />
 
         <AreaChartCard
           title="Humidity graph"
-          data={humidityWeek}
+          data={humidityChart}
           defaultRange="weekly"
+          rangeParamKey="humidityRange"
           unit="%"
         />
 

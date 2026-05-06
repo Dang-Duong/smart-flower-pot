@@ -10,12 +10,14 @@ const labelMap: Record<MetricStatus, string> = {
   ok: "Ok",
   warn: "Warning",
   error: "Error",
+  nodata: "No data",
 };
 
 const colorMap: Record<MetricStatus, string> = {
   ok: "bg-[#7DC97F] text-black",
   warn: "bg-[#F5A623] text-black",
   error: "bg-red-500 text-white",
+  nodata: "bg-gray-300 text-gray-600",
 };
 
 export function StatusPill({ status, className }: StatusPillProps) {

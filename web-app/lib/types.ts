@@ -1,6 +1,6 @@
 export type Reading = { t: string; value: number };
 
-export type MetricStatus = "ok" | "warn" | "error";
+export type MetricStatus = "ok" | "warn" | "error" | "nodata";
 
 export type Metric = {
   value: number;

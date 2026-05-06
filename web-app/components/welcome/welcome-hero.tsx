@@ -69,6 +69,12 @@ export function WelcomeHero() {
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </Button>
+        <p className="text-sm text-zinc-400 mt-1">
+          Already have an account?{" "}
+          <Link href="/login" className="text-[#F5A623] hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );

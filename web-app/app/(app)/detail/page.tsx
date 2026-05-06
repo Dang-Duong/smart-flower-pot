@@ -5,14 +5,24 @@ import { BarChartCard } from "@/components/charts/bar-chart-card";
 import { PageHeading } from "@/components/page-heading";
 import { flower } from "@/lib/mock-data";
 import { getDevicesServer, getReadingsServer } from "@/lib/api-server";
-import { latestMetric, aggregateByDayOfWeek, aggregateByHour } from "@/lib/aggregations";
+import { latestMetric, aggregateByDayOfWeek, aggregateByHour, aggregateByDayOfMonth } from "@/lib/aggregations";
+
+type Range = "day" | "weekly" | "monthly";
+
+function resolveRange(raw: string | undefined): Range {
+  if (raw === "day" || raw === "monthly") return raw;
+  return "weekly";
+}
 
 export default async function DetailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ device?: string }>;
+  searchParams: Promise<{ device?: string; tempRange?: string; humidityRange?: string }>;
 }) {
-  const { device: deviceParamId } = await searchParams;
+  const { device: deviceParamId, tempRange: tempRangeRaw, humidityRange: humidityRangeRaw } = await searchParams;
+  const tempRange = resolveRange(tempRangeRaw);
+  const humidityRange = resolveRange(humidityRangeRaw);
+
   const devices = await getDevicesServer();
 
   if (devices.length === 0) {
@@ -31,20 +41,39 @@ export default async function DetailPage({
   const readings = await getReadingsServer(selectedDevice.deviceId);
 
   const temperatureMetric = latestMetric(readings, "airTemp", "°C");
-  const tempDay = aggregateByHour(readings, "airTemp");
+  const humidityMetric = latestMetric(readings, "soilMoisture", "%");
   const lightHourly = aggregateByHour(readings, "light");
-  const humidityWeek = aggregateByDayOfWeek(readings, "soilMoisture");
+
+  const tempChart =
+    tempRange === "monthly"
+      ? aggregateByDayOfMonth(readings, "airTemp")
+      : tempRange === "weekly"
+        ? aggregateByDayOfWeek(readings, "airTemp")
+        : aggregateByHour(readings, "airTemp");
+
+  const humidityChart =
+    humidityRange === "day"
+      ? aggregateByHour(readings, "soilMoisture")
+      : humidityRange === "monthly"
+        ? aggregateByDayOfMonth(readings, "soilMoisture")
+        : aggregateByDayOfWeek(readings, "soilMoisture");
 
   return (
     <>
       <PageHeading title="Detail" subtitle="Sensor readings in depth" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <FlowerCard flower={flower} devices={devices} selectedDevice={selectedDevice} />
+        <FlowerCard
+          flower={flower}
+          devices={devices}
+          selectedDevice={selectedDevice}
+          status={humidityMetric.status}
+        />
         <TemperatureCard value={temperatureMetric.value} unit={temperatureMetric.unit} />
         <AreaChartCard
           title="Temperature graph"
-          data={tempDay}
+          data={tempChart}
           defaultRange="day"
+          rangeParamKey="tempRange"
           unit="°C"
         />
 
@@ -54,8 +83,9 @@ export default async function DetailPage({
         <div className="lg:col-span-2">
           <AreaChartCard
             title="Humidity graph"
-            data={humidityWeek}
+            data={humidityChart}
             defaultRange="weekly"
+            rangeParamKey="humidityRange"
             unit="%"
           />
         </div>

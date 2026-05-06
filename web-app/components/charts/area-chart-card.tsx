@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { Suspense, useId } from "react";
 import {
   Area,
   AreaChart,
@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RangeDropdown } from "@/components/range-dropdown";
+import { RangeDropdownClient } from "@/components/charts/range-dropdown-client";
 import type { Reading } from "@/lib/types";
 
 interface AreaChartCardProps {
@@ -21,6 +21,7 @@ interface AreaChartCardProps {
   highlightT?: string;
   showRangeDropdown?: boolean;
   defaultRange?: string;
+  rangeParamKey?: string;
   unit?: string;
 }
 
@@ -30,6 +31,7 @@ export function AreaChartCard({
   highlightT,
   showRangeDropdown = true,
   defaultRange = "weekly",
+  rangeParamKey,
   unit = "",
 }: AreaChartCardProps) {
   const uid = useId();
@@ -40,7 +42,11 @@ export function AreaChartCard({
     <Card className="bg-card text-card-foreground rounded-2xl h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-5">
         <CardTitle className="text-base font-black">{title}</CardTitle>
-        {showRangeDropdown && <RangeDropdown defaultValue={defaultRange} />}
+        {showRangeDropdown && rangeParamKey && (
+          <Suspense fallback={<div className="w-28 h-8 bg-gray-200 rounded-lg animate-pulse" />}>
+            <RangeDropdownClient paramKey={rangeParamKey} defaultValue={defaultRange} />
+          </Suspense>
+        )}
       </CardHeader>
       <CardContent className="px-2 pb-4">
         <div className="bg-white rounded-xl px-2 pt-2 pb-0">

@@ -1,21 +1,34 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera } from "lucide-react";
 
 interface FlowerImageProps {
   src: string;
   alt: string;
+  deviceId: string;
 }
 
-export function FlowerImage({ src, alt }: FlowerImageProps) {
+export function FlowerImage({ src, alt, deviceId }: FlowerImageProps) {
+  const storageKey = `flower-image-${deviceId}`;
   const [imageSrc, setImageSrc] = useState(src);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) setImageSrc(saved);
+  }, [storageKey]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageSrc(URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setImageSrc(dataUrl);
+      localStorage.setItem(storageKey, dataUrl);
+    };
+    reader.readAsDataURL(file);
   }
 
   return (

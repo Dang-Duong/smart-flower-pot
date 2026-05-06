@@ -4,6 +4,7 @@ import { HistoryCalendar } from "@/components/history/history-calendar";
 import { AreaChartCard } from "@/components/charts/area-chart-card";
 import { BarChartCard } from "@/components/charts/bar-chart-card";
 import { PageHeading } from "@/components/page-heading";
+import { DeviceSwitcher } from "@/components/device-switcher";
 import { getDevicesServer, getReadingsServer } from "@/lib/api-server";
 import { aggregateByDayOfWeek, aggregateByHour, toHistoryRows } from "@/lib/aggregations";
 
@@ -20,9 +21,9 @@ function formatSelectedLabel(date: Date): string {
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; device?: string }>;
 }) {
-  const { date: dateParam } = await searchParams;
+  const { date: dateParam, device: deviceParamId } = await searchParams;
   const selectedDate = parseDate(dateParam);
 
   const devices = await getDevicesServer();
@@ -39,7 +40,8 @@ export default async function HistoryPage({
     );
   }
 
-  const readings = await getReadingsServer(devices[0].deviceId);
+  const selectedDevice = devices.find((d) => d.deviceId === deviceParamId) ?? devices[0];
+  const readings = await getReadingsServer(selectedDevice.deviceId);
 
   const historyRows = toHistoryRows(readings, 48, selectedDate);
   const tempDay = aggregateByHour(readings, "airTemp", { date: selectedDate });
@@ -54,9 +56,16 @@ export default async function HistoryPage({
     ? `Showing ${formatSelectedLabel(selectedDate)}`
     : "Past sensor readings";
 
+  const lightTitle = selectedDate ? `Light · ${formatSelectedLabel(selectedDate)}` : "Light · today";
+
   return (
     <>
       <PageHeading title="History" subtitle={subtitle} />
+      {devices.length > 1 && (
+        <div className="mb-4 max-w-xs">
+          <DeviceSwitcher devices={devices} selectedId={selectedDevice.deviceId} basePath="/history" />
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:items-start">
         <div className="flex flex-col gap-4">
           <Card className="bg-card text-card-foreground rounded-2xl overflow-hidden">
@@ -81,7 +90,7 @@ export default async function HistoryPage({
         </div>
 
         <div className="flex flex-col gap-4">
-          <BarChartCard title="Light · today" data={lightHourly} unit=" lx" />
+          <BarChartCard title={lightTitle} data={lightHourly} unit=" lx" />
           <AreaChartCard
             title="Temperature graph"
             data={tempDay}

@@ -1,10 +1,11 @@
 import type { HistoryRow, Metric, Reading, SensorReading } from "./types";
-
-type NumericField = keyof Pick<SensorReading, "airTemp" | "airMoisture" | "light" | "uvIndex" | "soilMoisture">;
+import { statusFor } from "./sensor-thresholds";
+import type { NumericField } from "./sensor-thresholds";
 
 export function latestMetric(readings: SensorReading[], field: NumericField, unit: string): Metric {
-  if (readings.length === 0) return { value: 0, unit, status: "ok" };
-  return { value: Math.round(readings[0][field]), unit, status: "ok" };
+  if (readings.length === 0) return { value: 0, unit, status: "nodata" };
+  const value = Math.round(readings[0][field]);
+  return { value, unit, status: statusFor(field, readings[0][field]) };
 }
 
 export function aggregateByHour(
@@ -61,6 +62,29 @@ export function aggregateByDayOfWeek(readings: SensorReading[], field: NumericFi
       vals && vals.length > 0
         ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
         : 0;
+    return { t, value };
+  });
+}
+
+export function aggregateByDayOfMonth(readings: SensorReading[], field: NumericField): Reading[] {
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const buckets = new Map<string, number[]>();
+
+  for (const r of readings) {
+    const d = new Date(r.createdAt);
+    if (d < cutoff) continue;
+    const key = `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key)!.push(r[field]);
+  }
+
+  const today = new Date();
+  return Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (29 - i));
+    const t = `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const vals = buckets.get(t);
+    const value = vals && vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
     return { t, value };
   });
 }

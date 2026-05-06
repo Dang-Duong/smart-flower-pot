@@ -7,13 +7,14 @@ import type { Device } from "@/lib/api";
 interface DeviceSwitcherProps {
   devices: Device[];
   selectedId: string;
+  basePath?: string;
 }
 
-export function DeviceSwitcher({ devices, selectedId }: DeviceSwitcherProps) {
+export function DeviceSwitcher({ devices, selectedId, basePath = "/dashboard" }: DeviceSwitcherProps) {
   const router = useRouter();
 
   function handleChange(deviceId: string) {
-    router.push(`/dashboard?device=${encodeURIComponent(deviceId)}`);
+    router.push(`${basePath}?device=${encodeURIComponent(deviceId)}`);
   }
 
   return (
