@@ -7,7 +7,24 @@ import { PageHeading } from "@/components/page-heading";
 import { getDevicesServer, getReadingsServer } from "@/lib/api-server";
 import { aggregateByDayOfWeek, aggregateByHour, toHistoryRows } from "@/lib/aggregations";
 
-export default async function HistoryPage() {
+function parseDate(raw: string | undefined): Date | undefined {
+  if (!raw) return undefined;
+  const d = new Date(`${raw}T00:00:00`);
+  return isNaN(d.getTime()) ? undefined : d;
+}
+
+function formatSelectedLabel(date: Date): string {
+  return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
+
+export default async function HistoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
+  const { date: dateParam } = await searchParams;
+  const selectedDate = parseDate(dateParam);
+
   const devices = await getDevicesServer();
 
   if (devices.length === 0) {
@@ -24,24 +41,30 @@ export default async function HistoryPage() {
 
   const readings = await getReadingsServer(devices[0].deviceId);
 
-  const historyRows = toHistoryRows(readings, 48);
-  const tempDay = aggregateByHour(readings, "airTemp");
-  const lightHourly = aggregateByHour(readings, "light");
-  const humidityWeek = aggregateByDayOfWeek(readings, "soilMoisture");
+  const historyRows = toHistoryRows(readings, 48, selectedDate);
+  const tempDay = aggregateByHour(readings, "airTemp", { date: selectedDate });
+  const lightHourly = aggregateByHour(readings, "light", { date: selectedDate });
+  const humidityChart = selectedDate
+    ? aggregateByHour(readings, "soilMoisture", { date: selectedDate })
+    : aggregateByDayOfWeek(readings, "soilMoisture");
+
   const activeDates = [...new Set(readings.map((r) => r.createdAt.slice(0, 10)))];
+
+  const subtitle = selectedDate
+    ? `Showing ${formatSelectedLabel(selectedDate)}`
+    : "Past sensor readings";
 
   return (
     <>
-      <PageHeading title="History" subtitle="Past sensor readings" />
+      <PageHeading title="History" subtitle={subtitle} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:items-start">
-        {/* Left column: compact table + calendar */}
         <div className="flex flex-col gap-4">
           <Card className="bg-card text-card-foreground rounded-2xl overflow-hidden">
             <CardHeader className="py-3 px-5 border-b border-gray-200">
               <CardTitle className="text-sm font-bold">Readings</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="max-h-72 overflow-y-auto">
+              <div key={dateParam ?? "today"} className="h-72 overflow-y-auto">
                 <HistoryTable rows={historyRows} />
               </div>
             </CardContent>
@@ -52,12 +75,11 @@ export default async function HistoryPage() {
               <CardTitle className="text-sm font-bold">Activity</CardTitle>
             </CardHeader>
             <CardContent className="px-4 py-4">
-              <HistoryCalendar activeDates={activeDates} />
+              <HistoryCalendar activeDates={activeDates} selected={selectedDate} />
             </CardContent>
           </Card>
         </div>
 
-        {/* Right column: charts */}
         <div className="flex flex-col gap-4">
           <BarChartCard title="Light · today" data={lightHourly} unit=" lx" />
           <AreaChartCard
@@ -68,9 +90,9 @@ export default async function HistoryPage() {
             showRangeDropdown={false}
           />
           <AreaChartCard
-            title="Humidity graph"
-            data={humidityWeek}
-            defaultRange="weekly"
+            title={selectedDate ? "Humidity · hourly" : "Humidity graph"}
+            data={humidityChart}
+            defaultRange={selectedDate ? "day" : "weekly"}
             unit="%"
             showRangeDropdown={false}
           />

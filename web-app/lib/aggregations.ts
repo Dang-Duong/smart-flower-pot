@@ -10,14 +10,15 @@ export function latestMetric(readings: SensorReading[], field: NumericField, uni
 export function aggregateByHour(
   readings: SensorReading[],
   field: NumericField,
-  { startHour = 9, endHour = 20 } = {},
+  { startHour = 9, endHour = 20, date }: { startHour?: number; endHour?: number; date?: Date } = {},
 ): Reading[] {
-  const today = new Date().toDateString();
+  const anchor = date ?? new Date();
+  const anchorDateStr = anchor.toDateString();
   const buckets = new Map<number, number[]>();
 
   for (const r of readings) {
     const d = new Date(r.createdAt);
-    if (d.toDateString() !== today) continue;
+    if (d.toDateString() !== anchorDateStr) continue;
     const h = d.getHours();
     if (h < startHour || h > endHour) continue;
     if (!buckets.has(h)) buckets.set(h, []);
@@ -64,8 +65,12 @@ export function aggregateByDayOfWeek(readings: SensorReading[], field: NumericFi
   });
 }
 
-export function toHistoryRows(readings: SensorReading[], limit = 24): HistoryRow[] {
-  return readings.slice(0, limit).map((r) => {
+export function toHistoryRows(readings: SensorReading[], limit = 24, date?: Date): HistoryRow[] {
+  const rows = date
+    ? readings.filter((r) => new Date(r.createdAt).toDateString() === date.toDateString())
+    : readings;
+
+  return rows.slice(0, limit).map((r) => {
     const d = new Date(r.createdAt);
     const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     return {

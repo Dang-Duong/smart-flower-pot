@@ -16,7 +16,8 @@ export function HistoryTable({ rows }: HistoryTableProps) {
       {rows.map((row, i) => (
         <div
           key={i}
-          className="grid grid-cols-4 px-5 py-2.5 border-b border-gray-100 last:border-0 hover:bg-black/[0.03] transition-colors"
+          style={{ animationDelay: `${Math.min(i, 12) * 25}ms` }}
+          className="grid grid-cols-4 px-5 py-2.5 border-b border-gray-100 last:border-0 hover:bg-black/[0.03] transition-colors animate-in fade-in slide-in-from-top-1 duration-300 [animation-fill-mode:both]"
         >
           <span className="text-xs font-mono text-gray-400">{row.time}</span>
           <span className="text-xs font-mono font-semibold text-orange-500">{row.temperature} °C</span>
