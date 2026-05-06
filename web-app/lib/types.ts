@@ -27,3 +27,14 @@ export type Notification = {
   timestamp: string;
   read: boolean;
 };
+
+export type SensorReading = {
+  _id: string;
+  deviceId: string;
+  airTemp: number;
+  airMoisture: number;
+  light: number;
+  uvIndex: number;
+  soilMoisture: number;
+  createdAt: string;
+};

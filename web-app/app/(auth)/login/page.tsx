@@ -46,7 +46,7 @@ function LoginForm() {
     <Card className="w-full max-w-sm border-white/10 bg-zinc-900">
       <CardHeader>
         <CardTitle className="text-white text-xl">Sign in</CardTitle>
-        <CardDescription>Enter your email and password to continue.</CardDescription>
+        <CardDescription className="text-zinc-400">Enter your email and password to continue.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -60,7 +60,7 @@ function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Email</FormLabel>
+                  <FormLabel className="text-white">Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="you@example.com" {...field} />
                   </FormControl>
@@ -74,7 +74,7 @@ function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Password</FormLabel>
+                  <FormLabel className="text-white">Password</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -93,7 +93,7 @@ function LoginForm() {
           </form>
         </Form>
 
-        <p className="mt-4 text-center text-sm text-white/50">
+        <p className="mt-4 text-center text-sm text-zinc-400">
           No account?{" "}
           <Link href="/signup" className="text-[#F5A623] hover:underline">
             Create one

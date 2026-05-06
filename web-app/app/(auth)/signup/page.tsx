@@ -36,7 +36,7 @@ export default function SignupPage() {
     <Card className="w-full max-w-sm border-white/10 bg-zinc-900">
       <CardHeader>
         <CardTitle className="text-white text-xl">Create account</CardTitle>
-        <CardDescription>Start monitoring your plants today.</CardDescription>
+        <CardDescription className="text-zinc-400">Start monitoring your plants today.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -51,7 +51,7 @@ export default function SignupPage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white/80">First name</FormLabel>
+                    <FormLabel className="text-white">First name</FormLabel>
                     <FormControl>
                       <Input placeholder="Jane" {...field} />
                     </FormControl>
@@ -64,7 +64,7 @@ export default function SignupPage() {
                 name="surname"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white/80">Last name</FormLabel>
+                    <FormLabel className="text-white">Last name</FormLabel>
                     <FormControl>
                       <Input placeholder="Doe" {...field} />
                     </FormControl>
@@ -79,7 +79,7 @@ export default function SignupPage() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Username</FormLabel>
+                  <FormLabel className="text-white">Username</FormLabel>
                   <FormControl>
                     <Input placeholder="janedoe" {...field} />
                   </FormControl>
@@ -93,7 +93,7 @@ export default function SignupPage() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Email</FormLabel>
+                  <FormLabel className="text-white">Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="you@example.com" {...field} />
                   </FormControl>
@@ -107,7 +107,7 @@ export default function SignupPage() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white/80">Password</FormLabel>
+                  <FormLabel className="text-white">Password</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="Min. 8 characters" {...field} />
                   </FormControl>
@@ -126,7 +126,7 @@ export default function SignupPage() {
           </form>
         </Form>
 
-        <p className="mt-4 text-center text-sm text-white/50">
+        <p className="mt-4 text-center text-sm text-zinc-400">
           Already have an account?{" "}
           <Link href="/login" className="text-[#F5A623] hover:underline">
             Sign in

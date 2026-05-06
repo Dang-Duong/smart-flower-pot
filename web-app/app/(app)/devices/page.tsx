@@ -1,22 +1,10 @@
-import { getToken } from "@/lib/auth-server";
 import { PageHeading } from "@/components/page-heading";
 import { DeviceList } from "@/components/devices/device-list";
 import { AddDeviceForm } from "@/components/devices/add-device-form";
-import type { Device } from "@/lib/api";
-
-async function fetchDevices(token: string): Promise<Device[]> {
-  const res = await fetch(`${process.env.API_BASE_URL}/api/users/devices`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.devices ?? [];
-}
+import { getDevicesServer } from "@/lib/api-server";
 
 export default async function DevicesPage() {
-  const token = await getToken();
-  const devices = token ? await fetchDevices(token) : [];
+  const devices = await getDevicesServer();
 
   return (
     <>

@@ -31,12 +31,12 @@ function DeviceCard({ device }: { device: Device }) {
   }
 
   return (
-    <Card className="border-white/10 bg-zinc-900">
+    <Card className="bg-card">
       <CardContent className="pt-4 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="font-medium text-white">{device.name}</p>
-            <p className="text-xs text-white/40 font-mono mt-0.5">{device.deviceId}</p>
+            <p className="font-medium text-card-foreground">{device.name}</p>
+            <p className="text-xs text-card-foreground/50 font-mono mt-0.5">{device.deviceId}</p>
           </div>
           <Button
             size="sm"
@@ -52,14 +52,14 @@ function DeviceCard({ device }: { device: Device }) {
 
         {regenerated && (
           <div>
-            <p className="text-xs text-white/50 mb-1.5">New token — copy and reflash your hardware:</p>
-            <div className="flex items-center gap-2 rounded-lg bg-black/50 border border-white/10 px-3 py-2">
-              <code className="flex-1 text-xs text-green-400 break-all font-mono">{regenerated.token}</code>
+            <p className="text-xs text-card-foreground/60 mb-1.5">New token — copy and reflash your hardware:</p>
+            <div className="flex items-center gap-2 rounded-lg bg-black/10 border border-card-foreground/20 px-3 py-2">
+              <code className="flex-1 text-xs text-green-700 break-all font-mono">{regenerated.token}</code>
               <Button
                 size="icon-sm"
                 variant="ghost"
                 onClick={() => copyToken(regenerated.token)}
-                className="shrink-0 text-white/60 hover:text-white"
+                className="shrink-0 text-card-foreground/60 hover:text-card-foreground"
               >
                 {copied ? <Check className="size-3.5 text-green-400" /> : <Copy className="size-3.5" />}
               </Button>
