@@ -62,6 +62,62 @@ router.get('/devices', authenticateUser, async (req: Request, res: Response) => 
   }
 });
 
+// PUT /api/users/devices/:deviceId/profile
+router.put('/devices/:deviceId/profile', authenticateUser, async (req: Request, res: Response) => {
+  const { profileId } = req.body;
+  if (!profileId || typeof profileId !== 'string') {
+    res.status(400).json({ error: 'profileId is required' });
+    return;
+  }
+
+  try {
+    const user = await User.findById(req.user!.userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const device = user.devices.find((d) => d.deviceId === req.params.deviceId);
+    if (!device) {
+      res.status(404).json({ error: 'Device not found' });
+      return;
+    }
+
+    device.activeProfileId = profileId;
+    await user.save();
+
+    res.json({ devices: user.devices });
+  } catch (err) {
+    console.error('[set device profile]', err);
+    res.status(500).json({ error: 'Failed to set profile' });
+  }
+});
+
+// DELETE /api/users/devices/:deviceId/profile
+router.delete('/devices/:deviceId/profile', authenticateUser, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.user!.userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const device = user.devices.find((d) => d.deviceId === req.params.deviceId);
+    if (!device) {
+      res.status(404).json({ error: 'Device not found' });
+      return;
+    }
+
+    device.activeProfileId = undefined;
+    await user.save();
+
+    res.json({ devices: user.devices });
+  } catch (err) {
+    console.error('[remove device profile]', err);
+    res.status(500).json({ error: 'Failed to remove profile' });
+  }
+});
+
 // POST /api/users/devices/:deviceId/regenerate-token
 router.post('/devices/:deviceId/regenerate-token', authenticateUser, async (req: Request, res: Response) => {
   try {

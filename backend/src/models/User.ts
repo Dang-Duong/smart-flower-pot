@@ -5,6 +5,7 @@ export interface IDevice {
   deviceId: string;
   name: string;
   token: string;
+  activeProfileId?: string;
 }
 
 export interface IUser extends Document {
@@ -20,9 +21,10 @@ export interface IUser extends Document {
 
 const deviceSchema = new Schema<IDevice>(
   {
-    deviceId: { type: String, required: true },
-    name:     { type: String, required: true },
-    token:    { type: String, required: true },
+    deviceId:        { type: String, required: true },
+    name:            { type: String, required: true },
+    token:           { type: String, required: true },
+    activeProfileId: { type: String, default: null },
   },
   { _id: false }
 );

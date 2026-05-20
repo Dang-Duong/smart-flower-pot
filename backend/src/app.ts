@@ -5,6 +5,7 @@ import { connectDatabase } from './config/database';
 import authRoutes from './routes/auth';
 import iotRoutes from './routes/iot';
 import usersRoutes from './routes/users';
+import profileRoutes from './routes/profiles';
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/iot', iotRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/profiles', profileRoutes);
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
